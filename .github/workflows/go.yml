@@ -1,0 +1,42 @@
+name: test
+
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [ "1.20" ]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.version }}
+          cache: true
+
+      - name: Cache protoc-gen-go
+        uses: actions/cache@v3
+        with:
+          path: ~/go/bin/protoc-gen-go
+          key: protoc-gen-go-v1.26
+
+      - name: Install protoc
+        run: sudo apt install -y protobuf-compiler
+
+      - name: Install protoc-gen-go
+        run: go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26
+
+      - name: Generate code
+        run: ./weaver_linux generate
+
+      - name: Run
+        run: go run .
